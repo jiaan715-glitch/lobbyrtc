@@ -3,113 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>重装上阵 - 纯净匹配大厅</title>
+  <title>氧化妙妙屋</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <style>
-    body { background-color: #0f172a; color: white; font-family: sans-serif; }
+    body { background-color: #0b1120; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
   </style>
 </head>
-<body class="p-4">
-  <div class="max-w-md mx-auto">
-    <h1 class="text-2xl font-bold text-center mb-1 text-blue-500">重装上阵 纯净大厅</h1>
-    <p class="text-center text-gray-400 text-xs mb-6">拒绝外挂，只和看得见的人玩</p>
-
-    <div class="bg-gray-800 p-4 rounded-xl shadow-lg mb-6 border border-gray-700">
-      <h2 class="text-lg font-bold mb-3 text-white">发布你的房间</h2>
-      <input type="text" id="playerName" placeholder="你的游戏ID" class="w-full p-3 mb-3 bg-gray-900 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 text-white">
-      <input type="text" id="roomCode" placeholder="游戏内房间号（如：A1B2）" class="w-full p-3 mb-3 bg-gray-900 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 text-white">
-      <select id="gameMode" class="w-full p-3 mb-3 bg-gray-900 rounded-lg border border-gray-700 focus:outline-none text-white">
-        <option>占点模式</option>
-        <option>乱斗模式</option>
-        <option>风暴模式</option>
-        <option>自定义模式</option>
-      </select>
-      <button onclick="createRoom()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition">发布房间</button>
+<body class="p-4 min-h-screen">
+  <div class="max-w-md mx-auto pb-10">
+    
+    <!-- 顶部标题 -->
+    <div class="text-center mb-5">
+      <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-300">氧化妙妙屋</h1>
+      <p class="text-gray-400 text-xs mt-1">组队开黑 · 快乐游戏</p>
     </div>
 
-    <div class="bg-gray-800 p-4 rounded-xl shadow-lg border border-gray-700">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-bold">大厅列表</h2>
-        <span id="status" class="text-xs text-green-400">连接中...</span>
+    <!-- 📢 公告栏 -->
+    <div class="bg-blue-900/30 border border-blue-700/50 p-3 rounded-xl mb-6 flex items-start gap-2 shadow-lg">
+      <span class="text-blue-500 text-lg">📢</span>
+      <div class="text-xs text-blue-100/90 leading-relaxed">
+        <span class="font-bold text-blue-400">公告：</span>
+        欢迎来到妙妙屋！所有模式均为 6人局 · 无观战。大家按需选择“随机匹配”或“自己建房”！
       </div>
-      <div id="roomList" class="space-y-3">
-        <p class="text-gray-500 text-center py-4 text-sm">暂无人开房，快来抢沙发！</p>
+    </div>
+
+    <!-- 🎲 纯随机匹配 -->
+    <div class="glass p-4 rounded-2xl mb-6 shadow-xl border-t-2 border-t-green-500">
+      <h2 class="text-sm font-bold text-green-400 mb-3 flex items-center gap-2">🎲 纯随机匹配 (满6人自动开局)</h2>
+      <input type="text" id="matchName" placeholder="你的游戏ID" class="w-full p-2.5 mb-3 bg-slate-900/80 rounded-lg border border-slate-700 focus:outline-none focus:border-green-500 text-sm">
+      <button onclick="joinRandomMatch()" id="matchBtn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition active:scale-95 text-sm shadow-[0_0_15px_rgba(34,197,94,0.4)]">
+        开始随机匹配
+      </button>
+      <div id="matchQueue" class="mt-3 text-xs text-gray-400 bg-slate-900/50 p-2 rounded">
+        当前排队人数：0 / 6
+      </div>
+    </div>
+
+    <!-- ⚡ 指定模式求拉 -->
+    <div class="glass p-4 rounded-2xl mb-6 shadow-xl">
+      <h2 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">⚡ 指定模式 (求拉)</h2>
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="quickMatch('休闲-站点模式')" class="bg-indigo-600/80 hover:bg-indigo-500 text-white text-xs py-2 rounded-lg font-bold transition active:scale-95">站点模式</button>
+        <button onclick="quickMatch('标准擂台')" class="bg-indigo-600/80 hover:bg-indigo-500 text-white text-xs py-2 rounded-lg font-bold transition active:scale-95">标准擂台</button>
+        <button onclick="quickMatch('激斗擂台')" class="bg-indigo-600/80 hover:bg-indigo-500 text-white text-xs py-2 rounded-lg font-bold transition active:scale-95">激斗擂台</button>
+      </div>
+    </div>
+
+    <!-- 🏠 自己建房 -->
+    <div class="glass p-5 rounded-2xl mb-6 shadow-xl border-t-2 border-t-blue-500">
+      <h2 class="text-sm font-bold text-blue-400 mb-3 flex items-center gap-2">🏠 创建房间 (6人/无观战)</h2>
+      <input type="text" id="playerName" placeholder="你的游戏ID" class="w-full p-2.5 mb-2 bg-slate-900/80 rounded-lg border border-slate-700 text-sm">
+      <input type="text" id="roomCode" placeholder="游戏内房间号 (如: 1234)" class="w-full p-2.5 mb-3 bg-slate-900/80 rounded-lg border border-slate-700 text-sm">
+      
+      <select id="gameMode" class="w-full p-2.5 mb-3 bg-slate-900/80 rounded-lg border border-slate-700 text-sm">
+        <option>休闲-站点模式</option>
+        <option>标准擂台</option>
+        <option>激斗擂台</option>
+      </select>
+
+      <button onclick="createRoom()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg transition active:scale-95 text-sm">发布到大厅</button>
+    </div>
+
+    <!-- 🌐 实时大厅列表 -->
+    <div class="glass p-4 rounded-2xl shadow-xl">
+      <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
+        <h2 class="text-sm font-bold text-white">当前在线大厅</h2>
+        <span id="status" class="text-[10px] px-2 py-1 bg-slate-800 text-yellow-400 rounded-full">连接中...</span>
+      </div>
+      <div id="roomList" class="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
+        <p class="text-gray-500 text-center py-6 text-sm">暂无房间，快来抢首发！</p>
       </div>
     </div>
   </div>
 
   <script>
-    // 这是一个公共的免费通讯服务器，不需要你掏钱，也不需要你注册
     const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-    const TOPIC = 'zhongzhuang/pure_lobby_rooms_2024';
+    const TOPIC_ROOMS = 'yanghua_miaomiao_room_v4';
+    const TOPIC_MATCH = 'yanghua_miaomiao_match_v1'; // 匹配专用频道
     let rooms = [];
+    let matchQueue = []; // 排队池
+    let myMatchName = ""; // 当前正在匹配的玩家名字
 
     client.on('connect', () => {
-      document.getElementById('status').innerText = '已连接大厅';
-      client.subscribe(TOPIC, { qos: 1 });
+      document.getElementById('status').innerText = '实时在线';
+      document.getElementById('status').className = 'text-[10px] px-2 py-1 bg-green-900/50 text-green-400 rounded-full';
+      client.subscribe(TOPIC_ROOMS, { qos: 1 });
+      client.subscribe(TOPIC_MATCH, { qos: 1 });
     });
 
-    client.on('offline', () => {
-      document.getElementById('status').innerText = '连接断开...';
-      document.getElementById('status').className = 'text-xs text-red-400';
-    });
-
-    client.on('message', (topic, message) => {
-      if (topic === TOPIC) {
-        try {
-          rooms = JSON.parse(message.toString());
-          renderRooms();
-        } catch (e) {}
-      }
-    });
-
-    function createRoom() {
-      const name = document.getElementById('playerName').value.trim();
-      const code = document.getElementById('roomCode').value.trim();
-      const mode = document.getElementById('gameMode').value;
-
-      if (!name || !code) return alert("请填写游戏ID和房间号！");
-
-      const newRoom = { id: Date.now().toString(), name, code, mode };
-      
-      // 清理超过 1 小时的过期房间
-      const now = Date.now();
-      rooms = rooms.filter(r => now - parseInt(r.id) < 3600000);
-      rooms.push(newRoom);
-      
-      // 把新房间广播给所有在线的人
-      client.publish(TOPIC, JSON.stringify(rooms), { retain: true, qos: 1 });
-      document.getElementById('roomCode').value = '';
-      alert("发布成功！快去游戏里等他们吧！");
-    }
-
-    function deleteRoom(id) {
-      rooms = rooms.filter(r => r.id !== id);
-      client.publish(TOPIC, JSON.stringify(rooms), { retain: true, qos: 1 });
-    }
-
-    function renderRooms() {
-      const listEl = document.getElementById('roomList');
-      if (rooms.length === 0) {
-        listEl.innerHTML = '<p class="text-gray-500 text-center py-4 text-sm">暂无房间，快来抢沙发！</p>';
-        return;
-      }
-      rooms.sort((a, b) => b.id - a.id);
-      listEl.innerHTML = rooms.map(room => `
-        <div class="bg-gray-900 p-3 rounded-lg border border-gray-700 flex justify-between items-center">
-          <div>
-            <div class="font-bold text-blue-400 text-sm">${room.mode}</div>
-            <div class="text-xs text-gray-300 mt-1">房主: ${room.name}</div>
-            <div class="text-sm text-yellow-400 font-mono mt-1 font-bold">房号: ${room.code}</div>
-          </div>
-          <div class="flex flex-col gap-2">
-             <button onclick="navigator.clipboard.writeText('${room.code}'); alert('房号已复制，快去游戏加入！')" class="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1.5 rounded">复制房号</button>
-             <button onclick="deleteRoom('${room.id}')" class="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded">解散/满人</button>
-          </div>
-        </div>
-      `).join('');
-    }
-  </script>
-</body>
-</html>
+    client
