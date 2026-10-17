@@ -1,10 +1,1 @@
-[
-    {
-        "name": "hi",
-        "maxPlayers": 6
-    },
-    {
-        "name": "catan",
-        "maxPlayers": 6
-    }
-]
+[{"name": "模式A", "maxPlayers": 6}]
